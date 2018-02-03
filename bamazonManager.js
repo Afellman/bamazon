@@ -137,14 +137,12 @@ function addToInventory() {
       let new_quantity;
       let current_quantity;
       let amount_to_add = parseInt(answer.amount);
-      connection.query('SELECT * FROM products WHERE ?', {item_id: answer.item}, function(err, res) {
-        current_quantity = parseInt(res[0].stock_quantity);
-        new_quantity = current_quantity + amount_to_add;
-        connection.query('UPDATE products SET ? WHERE ?', [
-          {stock_quantity: new_quantity},
-          {item_id: answer.item}
-        ],function (err, res){
-        });
+      current_quantity = parseInt(products[0].stock_quantity);
+      new_quantity = current_quantity + amount_to_add;
+      connection.query('UPDATE products SET ? WHERE ?', [
+        {stock_quantity: new_quantity},
+        {item_id: answer.item}
+      ],function (err, res){
       });
     })
 };
@@ -176,17 +174,14 @@ function addNewProduct() {
     }
   ])
   .then(function (answer) {
-      connection.query('INSERT INTO products SET ?', {
-        product_name: answer.name,
-        deparment_name: answer.department,
-        price: answer.price,
-        stock_quantity: answer.quantity
-      }, function(err, res) {
-        console.log("done")
-      });
-    })
+    connection.query('INSERT INTO products SET ?', {
+      product_name: answer.name,
+      department_name: answer.department,
+      price: answer.price,
+      stock_quantity: answer.quantity
+    },function (err, res){
+      console.log("done")
+    });
+  })
 }
-
 // ------------------------------------------------------------------------
-
-blah
