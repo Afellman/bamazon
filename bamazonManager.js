@@ -6,7 +6,6 @@ const mysql = require('mysql');
 const inquirer = require('inquirer');
 const Table = require('cli-table');
 
-let products;
 // ------------------- Conencting to database ---------------------------
 let connection = mysql.createConnection({
   host: '127.0.0.1',
@@ -50,7 +49,7 @@ function askQuestions(){
         addNewProduct();
         break
       case "Quit":
-        // process.exit();
+        process.exit();
       default:
         // If no selection is made or somehow inquirer bugs out, the questions 
         // will be asked again.
@@ -66,8 +65,9 @@ function askQuestions(){
 
 // Function to display all the products currently in the inventory.
 function printProducts() {
+  let products;
   connection.query('select * from products', function(err, res){
-    products = res; 
+    products = res
     if (err) throw err;
     let table = new Table({
       head: ['ID', 'Product Name', 'Price', 'Quantity' ], 
@@ -85,6 +85,7 @@ function printProducts() {
       ]);
     });
     console.log(table.toString());
+    askQuestions()
   });
 };
 
@@ -93,6 +94,7 @@ function printProducts() {
 // ------------------- Low Inventory Function ---------------------------
 // View Low Inventory
 function printLowInventory() {
+  let products;
   connection.query('select * from products WHERE stock_quantity < 5', function(err, res){
     products = res; 
     if (err) throw err;
@@ -113,6 +115,7 @@ function printLowInventory() {
       ]);
     });
     console.log(table.toString());
+    askQuestions()
   });
 }
 // --------------------------------------------------------------------------
@@ -120,7 +123,27 @@ function printLowInventory() {
 // ------------------- Add New Inventory Function ---------------------------
 // Add to Inventory
 function addToInventory() {
-  printProducts()
+  let products;
+  connection.query('select * from products', function(err, res){
+    products = res; 
+    if (err) throw err;
+    let table = new Table({
+      head: ['ID', 'Product Name', 'Price', 'Quantity' ], 
+      colWidths: [5, 60, 30, 10, 10],
+      chars: { 'top': '═' , 'top-mid': '╤' , 'top-left': '╔', 'top-right': '╗',   'bottom': '═' , 'bottom-mid': '╧' ,
+      'bottom-left': '╚' , 'bottom-right': '╝',   'left': '║' , 'left-mid': '╟' , 'mid': '─' , 'mid-mid': '┼'
+      , 'right': '║' , 'right-mid': '╢' , 'middle': '│' }
+    });
+    products.forEach(element => {
+      table.push([
+        element.item_id, 
+        element.product_name,
+        element.price,
+        element.stock_quantity
+      ]);
+    });
+    console.log(table.toString());
+
   inquirer.prompt([
     {
       name: "item",
@@ -137,14 +160,18 @@ function addToInventory() {
       let new_quantity;
       let current_quantity;
       let amount_to_add = parseInt(answer.amount);
-      current_quantity = parseInt(products[0].stock_quantity);
+      let item1 = products.filter(element => element.item_id == answer.item);
+      let item = item1[0];
+      current_quantity = item.stock_quantity;
       new_quantity = current_quantity + amount_to_add;
       connection.query('UPDATE products SET ? WHERE ?', [
         {stock_quantity: new_quantity},
         {item_id: answer.item}
       ],function (err, res){
       });
+      askQuestions()
     })
+  });
 };
 // ------------------------------------------------------------------------
 
@@ -181,6 +208,7 @@ function addNewProduct() {
       stock_quantity: answer.quantity
     },function (err, res){
       console.log("done")
+      askQuestions()
     });
   })
 }
